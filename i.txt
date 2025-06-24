@@ -1,0 +1,3 @@
+UPDATE public.users 
+SET is_admin = true 
+WHERE email = 'predfi.xyz@gmail.com';

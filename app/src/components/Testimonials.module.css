@@ -1,0 +1,391 @@
+.section {
+  padding: 100px 0;
+  background: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(40, 167, 69, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.badge {
+  display: inline-block;
+  background: linear-gradient(135deg, rgba(75, 62, 255, 0.1), rgba(75, 62, 255, 0.2));
+  color: #4b3eff;
+  padding: 0.5rem 1.5rem;
+  border-radius: 50px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(75, 62, 255, 0.3);
+}
+
+.title {
+  font-family: "Poppins", sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f1f1f;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-family: "Inter", sans-serif;
+  font-size: 1.125rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.stat {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #f8f9ff, #ffffff);
+  border-radius: 16px;
+  border: 1px solid rgba(75, 62, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.statNumber {
+  font-family: "Poppins", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #28a745;
+  margin-bottom: 0.5rem;
+}
+
+.statLabel {
+  font-family: "Inter", sans-serif;
+  color: #666;
+  font-weight: 500;
+}
+
+.testimonialGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.testimonialCard {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(40, 167, 69, 0.1);
+  transition: all 0.3s ease;
+  animation: slideInUp 0.8s ease-out both;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.testimonialCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #28a745, #ffb300);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.testimonialCard:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+}
+
+.testimonialCard:hover::before {
+  opacity: 1;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.userDetails {
+  flex: 1;
+}
+
+.userName {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  color: #1f1f1f;
+  margin-bottom: 0.25rem;
+}
+
+.userLocation {
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.rating {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.star {
+  color: #ffb300;
+  fill: #ffb300;
+}
+
+.cardContent {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.quoteIcon {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  color: rgba(40, 167, 69, 0.2);
+  width: 40px;
+  height: 40px;
+}
+
+.testimonialText {
+  font-family: "Inter", sans-serif;
+  line-height: 1.6;
+  color: #333;
+  font-style: italic;
+  padding-left: 1rem;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(40, 167, 69, 0.1);
+}
+
+.earnings {
+  text-align: left;
+}
+
+.earningsAmount {
+  font-family: "Poppins", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #28a745;
+  margin-bottom: 0.25rem;
+}
+
+.earningsLabel {
+  font-family: "Inter", sans-serif;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.verifiedBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(40, 167, 69, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  color: #28a745;
+  font-weight: 500;
+}
+
+.verifiedIcon {
+  width: 16px;
+  height: 16px;
+  background: #28a745;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.trustSection {
+  background: linear-gradient(135deg, #f8f9ff, #ffffff);
+  border-radius: 24px;
+  padding: 3rem;
+  text-align: center;
+  border: 1px solid rgba(75, 62, 255, 0.1);
+  animation: fadeInUp 0.8s ease-out 0.6s both;
+}
+
+.trustTitle {
+  font-family: "Poppins", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f1f1f;
+  margin-bottom: 1rem;
+}
+
+.trustText {
+  font-family: "Inter", sans-serif;
+  font-size: 1.125rem;
+  color: #666;
+  margin-bottom: 2rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.trustFeatures {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.trustFeature {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  color: #1f1f1f;
+}
+
+.trustFeatureIcon {
+  font-size: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .stat {
+    padding: 1rem;
+  }
+
+  .testimonialGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .testimonialCard {
+    padding: 1.5rem;
+  }
+
+  .trustSection {
+    padding: 2rem 1rem;
+  }
+
+  .trustFeatures {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .cardFooter {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .testimonialCard {
+    padding: 1rem;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .userInfo {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+}

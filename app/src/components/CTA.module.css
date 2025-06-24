@@ -1,0 +1,502 @@
+.section {
+  padding: 100px 0;
+  background: linear-gradient(135deg, #4b3eff 0%, #6366f1 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 70% 30%, rgba(40, 167, 69, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.mainCTA {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.ctaContent {
+  color: white;
+  animation: slideInLeft 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 179, 0, 0.2);
+  color: #ffb300;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 179, 0, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.badgeIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.title {
+  font-family: "Poppins", sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.highlight {
+  background: linear-gradient(135deg, #ffb300, #ffa000);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+.highlight::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffb300, #28a745);
+  border-radius: 2px;
+  animation: expandWidth 1s ease-out 1s both;
+}
+
+@keyframes expandWidth {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.subtitle {
+  font-family: "Inter", sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.6;
+  opacity: 0.9;
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.8s ease-out 0.4s both;
+}
+
+.offerDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  animation: fadeInUp 0.8s ease-out 0.6s both;
+}
+
+.offerItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.offerItem:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(10px);
+}
+
+.offerIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffb300;
+  background: rgba(255, 179, 0, 0.1);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.offerText {
+  flex: 1;
+}
+
+.offerTitle {
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-bottom: 0.25rem;
+}
+
+.offerAmount {
+  font-family: "Poppins", sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ffb300;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.8s ease-out 0.8s both;
+}
+
+.primaryBtn {
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(40, 167, 69, 0.4);
+  background: linear-gradient(135deg, #218838, #1e7e34);
+}
+
+.secondaryBtn {
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.secondaryBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-3px);
+  color: white;
+}
+
+.btnIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.guarantee {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  opacity: 0.9;
+  animation: fadeInUp 0.8s ease-out 1s both;
+}
+
+.guaranteeIcon {
+  width: 20px;
+  height: 20px;
+  color: #28a745;
+}
+
+.ctaVisual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.moneyStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+}
+
+.moneyCard {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  animation: floatCard 3s ease-in-out infinite both;
+}
+
+@keyframes floatCard {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-15px) rotate(-1deg);
+  }
+}
+
+.moneyCard:hover {
+  transform: scale(1.05) translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.moneyAmount {
+  font-family: "Poppins", sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #28a745;
+  margin-bottom: 0.5rem;
+}
+
+.moneyLabel {
+  font-family: "Inter", sans-serif;
+  color: #666;
+  font-weight: 500;
+}
+
+.floatingStats {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.statBubble {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.75rem 1rem;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f1f1f;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: floatBubble 4s ease-in-out infinite;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.statBubble:nth-child(1) {
+  top: 10%;
+  right: -20px;
+}
+
+.statBubble:nth-child(2) {
+  top: 50%;
+  left: -30px;
+}
+
+.statBubble:nth-child(3) {
+  bottom: 20%;
+  right: -10px;
+}
+
+@keyframes floatBubble {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.ratingStars {
+  font-size: 0.75rem;
+}
+
+.payoutIcon {
+  font-size: 1rem;
+}
+
+.urgency {
+  background: rgba(255, 179, 0, 0.1);
+  border: 2px solid rgba(255, 179, 0, 0.3);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  animation: fadeInUp 0.8s ease-out 1.2s both;
+}
+
+.urgencyContent {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: white;
+  text-align: left;
+}
+
+.urgencyIcon {
+  color: #ffb300;
+  flex-shrink: 0;
+}
+
+.urgencyTitle {
+  font-family: "Poppins", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #ffb300;
+}
+
+.urgencySubtitle {
+  font-family: "Inter", sans-serif;
+  opacity: 0.9;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .mainCTA {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .offerDetails {
+    gap: 0.75rem;
+  }
+
+  .offerItem {
+    padding: 0.75rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .primaryBtn,
+  .secondaryBtn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .urgencyContent {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .floatingStats {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .offerItem {
+    padding: 0.5rem;
+  }
+
+  .offerIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .urgencyContent {
+    padding: 1rem;
+  }
+}

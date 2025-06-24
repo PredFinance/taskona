@@ -1,0 +1,530 @@
+.hero {
+  padding: 120px 0 80px;
+  background: linear-gradient(135deg, #fafafa 0%, #f8f9ff 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 80%, rgba(40, 167, 69, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(75, 62, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.content {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, rgba(255, 179, 0, 0.1), rgba(255, 179, 0, 0.2));
+  color: #ffb300;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 179, 0, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.badgeIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.title {
+  font-family: "Poppins", sans-serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #1f1f1f;
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.highlight {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+.highlight::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #28a745, #ffb300);
+  border-radius: 2px;
+  animation: expandWidth 1s ease-out 1s both;
+}
+
+@keyframes expandWidth {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.subtitle {
+  font-family: "Inter", sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: #666;
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.8s ease-out 0.4s both;
+}
+
+.stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+  animation: fadeInUp 0.8s ease-out 0.6s both;
+}
+
+.stat {
+  text-align: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(40, 167, 69, 0.1);
+}
+
+.stat:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.statNumber {
+  font-family: "Poppins", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #28a745;
+  margin-bottom: 0.25rem;
+}
+
+.statLabel {
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  animation: fadeInUp 0.8s ease-out 0.8s both;
+}
+
+.primaryBtn {
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  background: linear-gradient(135deg, #4b3eff, #6366f1);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(75, 62, 255, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(75, 62, 255, 0.4);
+  background: linear-gradient(135deg, #3730d4, #4f46e5);
+}
+
+.secondaryBtn {
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  border: 2px solid #28a745;
+  color: #28a745;
+  background: white;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.secondaryBtn:hover {
+  background: #28a745;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(40, 167, 69, 0.3);
+}
+
+.btnIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.trustIndicators {
+  display: flex;
+  gap: 2rem;
+  animation: fadeInUp 0.8s ease-out 1s both;
+}
+
+.trustItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.trustIcon {
+  width: 20px;
+  height: 20px;
+  color: #28a745;
+}
+
+.visual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.phoneFrame {
+  width: 280px;
+  height: 560px;
+  background: linear-gradient(145deg, #ffffff, #f0f0f0);
+  border-radius: 30px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  position: relative;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.phoneScreen {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4b3eff, #6366f1);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.appInterface {
+  padding: 1.5rem 1rem;
+  height: 100%;
+  background: white;
+  margin-top: 40px;
+  border-radius: 20px 20px 0 0;
+}
+
+.appHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.appLogo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.appTitle {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #1f1f1f;
+}
+
+.balanceCard {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  padding: 1.5rem;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  color: white;
+  text-align: center;
+}
+
+.balanceLabel {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.balanceAmount {
+  font-family: "Poppins", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.taskItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #28a745;
+}
+
+.taskIcon {
+  font-size: 1.25rem;
+}
+
+.taskInfo {
+  flex: 1;
+}
+
+.taskName {
+  font-weight: 600;
+  color: #1f1f1f;
+  margin-bottom: 0.25rem;
+}
+
+.taskReward {
+  font-size: 0.875rem;
+  color: #28a745;
+  font-weight: 600;
+}
+
+.floatingElements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.floatingCard {
+  position: absolute;
+  background: white;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  animation: floatCard 4s ease-in-out infinite;
+  border: 1px solid rgba(40, 167, 69, 0.1);
+}
+
+.floatingCard:nth-child(1) {
+  top: 20%;
+  right: -20px;
+}
+
+.floatingCard:nth-child(2) {
+  top: 50%;
+  left: -30px;
+}
+
+.floatingCard:nth-child(3) {
+  bottom: 30%;
+  right: -10px;
+}
+
+@keyframes floatCard {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-15px) rotate(-1deg);
+  }
+}
+
+.cardIcon {
+  width: 20px;
+  height: 20px;
+  color: #28a745;
+}
+
+.cardText {
+  color: #1f1f1f;
+}
+
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+    padding: 0 0.5rem;
+  }
+
+  .title {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .stats {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .stat {
+    min-width: 140px;
+    padding: 0.75rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .primaryBtn,
+  .secondaryBtn {
+    width: 100%;
+    max-width: 280px;
+    padding: 0.875rem 1.5rem;
+  }
+
+  .trustIndicators {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .phoneFrame {
+    width: 200px;
+    height: 400px;
+    padding: 15px;
+  }
+
+  .floatingCard {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+}
