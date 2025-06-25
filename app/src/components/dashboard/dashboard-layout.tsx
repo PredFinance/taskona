@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Home, WorkflowIcon as Tasks, Users, Wallet, Settings, LogOut, Menu, X, Bell, User, Shield } from "lucide-react"
+import { Home, Users, Wallet, Settings, LogOut, Menu, X, Bell, User, Shield, ShoppingBag } from "lucide-react"
 import { getCurrentUser, signOutUser } from "@/lib/supabase"
 import { Spinner } from "@/components/ui/spinner"
 import type { User as UserType } from "@/lib/types"
@@ -41,21 +41,24 @@ export default function DashboardLayout({ children, activeTab }: DashboardLayout
     }
   }
 
+  // Simplified signout handler
   const handleSignOut = async () => {
     try {
       await signOutUser()
       toast.success("Signed out successfully")
-      router.push("/")
+      router.push("/auth/signin")
+      router.refresh() // Force refresh to clear any cached data
     } catch (error) {
+      console.error("Sign out error:", error)
       toast.error("Failed to sign out")
     }
   }
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: Home, href: "/dashboard" },
-    { id: "tasks", label: "Tasks", icon: Tasks, href: "/dashboard/tasks" },
     { id: "referrals", label: "Referrals", icon: Users, href: "/dashboard/referrals" },
     { id: "wallet", label: "Wallet", icon: Wallet, href: "/dashboard/wallet" },
+    { id: "products", label: "Products", icon: ShoppingBag, href: "/dashboard/products" },
     { id: "settings", label: "Settings", icon: Settings, href: "/dashboard/settings" },
   ]
 
@@ -104,7 +107,7 @@ export default function DashboardLayout({ children, activeTab }: DashboardLayout
         {/* Sidebar Content */}
         <div className="flex flex-col h-full">
           {/* Navigation Menu */}
-          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          <nav className="px-4 py-6 space-y-2">
             {menuItems.map((item) => (
               <a
                 key={item.id}
@@ -127,7 +130,10 @@ export default function DashboardLayout({ children, activeTab }: DashboardLayout
             ))}
           </nav>
 
-          {/* User Profile Section - Elevated */}
+          {/* Spacer to push profile section down but not to bottom */}
+          <div className="flex-1"></div>
+
+          {/* User Profile Section - POSITIONED AFTER CONTENT WITH SPACING */}
           <div className="relative p-4 border-t border-gray-200 bg-white">
             {/* Profile Menu Dropdown */}
             {showProfileMenu && (
@@ -142,7 +148,10 @@ export default function DashboardLayout({ children, activeTab }: DashboardLayout
                   )}
                 </div>
                 <button
-                  onClick={() => router.push("/dashboard/settings")}
+                  onClick={() => {
+                    setShowProfileMenu(false)
+                    router.push("/dashboard/settings")
+                  }}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
                 >
                   <Settings className="w-4 h-4 mr-2" />
@@ -150,7 +159,10 @@ export default function DashboardLayout({ children, activeTab }: DashboardLayout
                 </button>
                 {user.is_admin && (
                   <button
-                    onClick={() => router.push("/admin")}
+                    onClick={() => {
+                      setShowProfileMenu(false)
+                      router.push("/admin")
+                    }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
                   >
                     <Shield className="w-4 h-4 mr-2" />
@@ -230,6 +242,15 @@ export default function DashboardLayout({ children, activeTab }: DashboardLayout
               <button className="p-2 rounded-full hover:bg-gray-100 transition-colors relative">
                 <Bell className="w-5 h-5 text-gray-600" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+
+              {/* Quick Signout Button in Header */}
+              <button
+                onClick={handleSignOut}
+                className="p-2 rounded-full hover:bg-red-50 transition-colors text-red-600"
+                title="Sign Out"
+              >
+                <LogOut className="w-5 h-5" />
               </button>
             </div>
           </div>

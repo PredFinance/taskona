@@ -39,9 +39,11 @@ export const signInUser = async (email: string, password: string) => {
   return data
 }
 
+// Simplified signout - just call supabase signout, that's it
 export const signOutUser = async () => {
   const { error } = await supabase.auth.signOut()
   if (error) throw error
+  return true
 }
 
 export const getCurrentUser = async () => {

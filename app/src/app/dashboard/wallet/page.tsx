@@ -11,6 +11,10 @@ import { Button } from "@/components/ui/button"
 import { Wallet, Plus, Minus, CreditCard, ArrowUpRight, ArrowDownLeft, Clock } from "lucide-react"
 import toast from "react-hot-toast"
 
+// Import the new enhanced components
+import EnhancedTopUpModal from "@/components/wallet/enhanced-top-up-modal"
+import ComprehensiveWithdrawModal from "@/components/wallet/comprehensive-withdraw-modal"
+
 export default function WalletPage() {
   const [user, setUser] = useState<User | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -65,6 +69,10 @@ export default function WalletPage() {
       return
     }
     setShowWithdrawModal(true)
+  }
+
+  const handleModalSuccess = () => {
+    loadWalletData() // Reload data after successful transaction
   }
 
   if (isLoading) {
@@ -307,7 +315,22 @@ export default function WalletPage() {
         )}
       </div>
 
-      {/* Modals would go here - TopUpModal and WithdrawModal components */}
+      {/* Modals */}
+      <EnhancedTopUpModal
+        isOpen={showTopUpModal}
+        onClose={() => setShowTopUpModal(false)}
+        onSuccess={handleModalSuccess}
+        userId={user?.id || ""}
+      />
+
+      <ComprehensiveWithdrawModal
+        isOpen={showWithdrawModal}
+        onClose={() => setShowWithdrawModal(false)}
+        onSuccess={handleModalSuccess}
+        userId={user?.id || ""}
+        currentBalance={user?.balance || 0}
+        userEmail={user?.email || ""}
+      />
     </DashboardLayout>
   )
 }
