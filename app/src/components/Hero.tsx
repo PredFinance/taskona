@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { ArrowRight, Play, Star, Shield, Zap, Smartphone, DollarSign, Target, Users, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import styles from "./Hero.module.css"
@@ -37,10 +38,14 @@ export default function Hero() {
           </div>
 
           <div className={styles.actions}>
-            <Button className={styles.primaryBtn}>
-              Create Account
-              <ArrowRight className={styles.btnIcon} />
-            </Button>
+            <Link href="/auth/signup" passHref>
+              <Button className={styles.primaryBtn} asChild>
+                <>
+                  Create Account
+                  <ArrowRight className={styles.btnIcon} />
+                </>
+              </Button>
+            </Link>
             <Button variant="outline" className={styles.secondaryBtn}>
               <Play className={styles.btnIcon} />
               See How It Works
@@ -65,38 +70,14 @@ export default function Hero() {
 
         <div className={styles.visual}>
           <div className={styles.phoneFrame}>
-            <div className={styles.phoneScreen}>
-              <div className={styles.appInterface}>
-                <div className={styles.appHeader}>
-                  <div className={styles.appLogo}>T</div>
-                  <div className={styles.appTitle}>Taskona</div>
-                </div>
-                <div className={styles.balanceCard}>
-                  <div className={styles.balanceLabel}>Available Balance</div>
-                  <div className={styles.balanceAmount}>₦12,450</div>
-                </div>
-                <div className={styles.taskList}>
-                  <div className={styles.taskItem}>
-                    <div className={styles.taskIcon}>
-                      <Check size={18} />
-                    </div>
-                    <div className={styles.taskInfo}>
-                      <div className={styles.taskName}>Daily Check-in</div>
-                      <div className={styles.taskReward}>+₦50</div>
-                    </div>
-                  </div>
-                  <div className={styles.taskItem}>
-                    <div className={styles.taskIcon}>
-                      <Smartphone size={18} />
-                    </div>
-                    <div className={styles.taskInfo}>
-                      <div className={styles.taskName}>Share on WhatsApp</div>
-                      <div className={styles.taskReward}>+₦100</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <img
+              src="/phone.png"
+              alt="Taskona mobile app preview"
+              className={styles.phoneImage}
+              width={320}
+              height={640}
+              style={{ maxWidth: "100%", height: "auto", display: "block", margin: "0 auto" }}
+            />
           </div>
           <div className={styles.floatingElements}>
             <div className={styles.floatingCard} style={{ animationDelay: "0s" }}>

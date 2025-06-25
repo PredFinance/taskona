@@ -1,5 +1,6 @@
 import { ArrowRight, Shield, Zap, Users, Gift, Clock, DollarSign, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import styles from "./CTA.module.css"
 
 export default function CTA() {
@@ -54,10 +55,14 @@ export default function CTA() {
               </div>
 
               <div className={styles.actions}>
-                <Button className={styles.primaryBtn}>
-                  Activate Account - ₦300
-                  <ArrowRight className={styles.btnIcon} />
-                </Button>
+                <Link href="/auth/signup" passHref>
+                  <Button className={styles.primaryBtn} asChild>
+                    <>
+                      Activate Account - ₦300
+                      <ArrowRight className={styles.btnIcon} />
+                    </>
+                  </Button>
+                </Link>
                 <Button variant="outline" className={styles.secondaryBtn}>
                   Learn More First
                 </Button>

@@ -1,1 +1,0 @@
-npm install @hookform/resolvers @paystack/inline-js @paystack/paystack-sdk @radix-ui/react-slot react-hook-form zod
