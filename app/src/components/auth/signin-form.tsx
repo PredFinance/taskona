@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -23,6 +23,17 @@ export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Show toast if redirected after email verification
+  useEffect(() => {
+    const type = searchParams.get("type")
+    if (type === "signup" || type === "email_confirm") {
+      toast.success("Email verified successfully! You can now sign in.")
+      // Optionally, remove the query param from the URL
+      // router.replace("/auth/signin", { scroll: false })
+    }
+  }, [searchParams])
 
   const {
     register,

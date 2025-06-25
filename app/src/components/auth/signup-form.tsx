@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -32,14 +32,29 @@ export default function SignUpForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Get referral code from URL
+  const refFromUrl = searchParams.get("ref") || ""
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      referralCode: refFromUrl,
+    },
   })
+
+  // If the user lands on the page and the ref param changes, update the field
+  useEffect(() => {
+    if (refFromUrl) {
+      setValue("referralCode", refFromUrl)
+    }
+  }, [refFromUrl, setValue])
 
   const onSubmit = async (data: SignUpFormData) => {
     setIsLoading(true)
@@ -56,197 +71,149 @@ export default function SignUpForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md"
-      >
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-cyan-400/20 to-emerald-400/20 rounded-full blur-3xl" />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-md mx-auto"
+    >
+      <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <div className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <Sparkles className="w-8 h-8 text-white" />
+          </motion.div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+          <p className="text-gray-600">Start your earning journey today</p>
         </div>
 
-        <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-20 h-20 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"
-            >
-              <Sparkles className="w-10 h-10 text-white" />
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2"
-            >
-              Join Taskona
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-gray-600 text-lg"
-            >
-              Start your earning journey today
-            </motion.p>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                {...register("fullName")}
+                type="text"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                placeholder="Enter your full name"
+                autoComplete="name"
+              />
+            </div>
+            {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>}
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Full Name</label>
-              <div className="relative group">
-                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-emerald-500 transition-colors" />
-                <input
-                  {...register("fullName")}
-                  type="text"
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 backdrop-blur-sm"
-                  placeholder="Enter your full name"
-                />
-              </div>
-              {errors.fullName && (
-                <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                  <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  {errors.fullName.message}
-                </p>
-              )}
-            </motion.div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                {...register("email")}
+                type="email"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                placeholder="Enter your email"
+                autoComplete="email"
+              />
+            </div>
+            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+          </div>
 
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Email Address</label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-emerald-500 transition-colors" />
-                <input
-                  {...register("email")}
-                  type="email"
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 backdrop-blur-sm"
-                  placeholder="Enter your email"
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                  <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  {errors.email.message}
-                </p>
-              )}
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Password</label>
-              <div className="relative group">
-                <input
-                  {...register("password")}
-                  type={showPassword ? "text" : "password"}
-                  className="w-full pl-4 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 backdrop-blur-sm"
-                  placeholder="Create a strong password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-emerald-500 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                  <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  {errors.password.message}
-                </p>
-              )}
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Confirm Password</label>
-              <div className="relative group">
-                <input
-                  {...register("confirmPassword")}
-                  type={showConfirmPassword ? "text" : "password"}
-                  className="w-full pl-4 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 backdrop-blur-sm"
-                  placeholder="Confirm your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-emerald-500 transition-colors"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                  <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  {errors.confirmPassword.message}
-                </p>
-              )}
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.9 }}>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Referral Code <span className="text-gray-400 font-normal">(Optional)</span>
-              </label>
-              <div className="relative group">
-                <Users className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-emerald-500 transition-colors" />
-                <input
-                  {...register("referralCode")}
-                  type="text"
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-white/50 backdrop-blur-sm"
-                  placeholder="Enter referral code"
-                />
-              </div>
-              {errors.referralCode && (
-                <p className="mt-2 text-sm text-red-500 flex items-center gap-1">
-                  <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                  {errors.referralCode.message}
-                </p>
-              )}
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }}>
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white py-4 rounded-xl font-semibold text-lg transition-all transform hover:scale-[1.02] hover:shadow-xl disabled:transform-none disabled:hover:scale-100 shadow-lg"
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <div className="relative">
+              <input
+                {...register("password")}
+                type={showPassword ? "text" : "password"}
+                className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                placeholder="Create a strong password"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                tabIndex={-1}
               >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <Spinner size="sm" />
-                    Creating Your Account...
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <CheckCircle className="w-5 h-5" />
-                    Create Account
-                  </div>
-                )}
-              </Button>
-            </motion.div>
-          </form>
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.1 }}
-            className="mt-8 text-center"
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+            <div className="relative">
+              <input
+                {...register("confirmPassword")}
+                type={showConfirmPassword ? "text" : "password"}
+                className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                placeholder="Confirm your password"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Referral Code <span className="text-gray-400 font-normal">(Optional)</span>
+            </label>
+            <div className="relative">
+              <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                {...register("referralCode")}
+                type="text"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                placeholder="Enter referral code"
+                autoComplete="off"
+              />
+            </div>
+            {errors.referralCode && <p className="mt-1 text-sm text-red-600">{errors.referralCode.message}</p>}
+          </div>
+
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3 rounded-lg font-semibold transition-all transform hover:scale-105"
           >
-            <p className="text-gray-600">
-              Already have an account?{" "}
-              <a
-                href="/auth/signin"
-                className="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline transition-all"
-              >
-                Sign In
-              </a>
-            </p>
-          </motion.div>
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <Spinner size="sm" className="mr-2" />
+                Creating Your Account...
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle className="w-5 h-5" />
+                Create Account
+              </div>
+            )}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Already have an account?{" "}
+            <a
+              href="/auth/signin"
+              className="text-green-600 hover:text-green-700 font-semibold"
+            >
+              Sign In
+            </a>
+          </p>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   )
 }
