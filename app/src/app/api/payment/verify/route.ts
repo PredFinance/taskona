@@ -75,15 +75,15 @@ export async function GET(request: NextRequest) {
             await supabase
               .from("users")
               .update({
-                balance: referrer.balance + 300,
-                total_earned: referrer.total_earned + 300,
+                balance: referrer.balance + 100, // changed from 300 to 100
+                total_earned: referrer.total_earned + 100, // changed from 300 to 100
               })
               .eq("id", user.referred_by)
 
             // Update referral record
             await supabase
               .from("referrals")
-              .update({ bonus_paid: 300 })
+              .update({ bonus_paid: 100 }) // changed from 300 to 100
               .eq("referrer_id", user.referred_by)
               .eq("referred_id", metadata.userId)
 
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
             await supabase.from("transactions").insert({
               user_id: user.referred_by,
               type: "referral_bonus",
-              amount: 300,
+              amount: 100, // changed from 300 to 100
               status: "completed",
               reference: `REF_${Date.now()}`,
               description: "Referral bonus payment",

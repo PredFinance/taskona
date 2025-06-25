@@ -28,7 +28,7 @@ export default function ActivationPayment({ userEmail, userId, onSuccess }: Acti
         },
         body: JSON.stringify({
           email: userEmail,
-          amount: 30000, // ₦300 in kobo
+          amount: 35000, // ₦350 in kobo
           userId: userId,
           type: "activation",
         }),
