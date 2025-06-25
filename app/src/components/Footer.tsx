@@ -10,6 +10,7 @@ import {
   CheckCircle,
   Building,
 } from "lucide-react"
+import Link from "next/link"
 import styles from "./Footer.module.css"
 
 export default function Footer() {
@@ -43,79 +44,32 @@ export default function Footer() {
 
           <div className={styles.links}>
             <div className={styles.linkGroup}>
-              <h4 className={styles.linkTitle}>Platform</h4>
+              <div className={styles.linkTitle}>Support</div>
               <ul className={styles.linkList}>
                 <li>
-                  <a href="#how-it-works" className={styles.link}>
-                    How It Works
-                  </a>
-                </li>
-                <li>
-                  <a href="#earnings" className={styles.link}>
-                    Earning Opportunities
-                  </a>
-                </li>
-                <li>
-                  <a href="#testimonials" className={styles.link}>
-                    Success Stories
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className={styles.link}>
-                    Referral Program
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div className={styles.linkGroup}>
-              <h4 className={styles.linkTitle}>Support</h4>
-              <ul className={styles.linkList}>
-                <li>
-                  <a href="#" className={styles.link}>
+                  <Link href="/help" className={styles.link}>
                     Help Center
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className={styles.link}>
-                    Contact Support
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className={styles.link}>
-                    Payment Issues
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className={styles.link}>
-                    Account Help
-                  </a>
+                  <Link href="/contact" className={styles.link}>
+                    Contact Us
+                  </Link>
                 </li>
               </ul>
             </div>
-
             <div className={styles.linkGroup}>
-              <h4 className={styles.linkTitle}>Legal</h4>
+              <div className={styles.linkTitle}>Legal</div>
               <ul className={styles.linkList}>
                 <li>
-                  <a href="#" className={styles.link}>
+                  <Link href="/terms" className={styles.link}>
                     Terms of Service
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className={styles.link}>
+                  <Link href="/privacy" className={styles.link}>
                     Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className={styles.link}>
-                    Cookie Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className={styles.link}>
-                    Disclaimer
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>

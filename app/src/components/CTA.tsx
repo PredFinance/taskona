@@ -1,4 +1,4 @@
-import { ArrowRight, Shield, Zap, Users, Gift, Clock, DollarSign } from "lucide-react"
+import { ArrowRight, Shield, Zap, Users, Gift, Clock, DollarSign, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import styles from "./CTA.module.css"
 
@@ -95,8 +95,10 @@ export default function CTA() {
                   <span>4.9/5 Rating</span>
                 </div>
                 <div className={styles.statBubble} style={{ animationDelay: "2s" }}>
-                  <div className={styles.payoutIcon}>💳</div>
-                  <span>₦2.5B+ Paid</span>
+                  <div className={styles.payoutIcon}>
+                    <CreditCard size={20} />
+                  </div>
+                  <span>₦2.5M+ Paid</span>
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { ArrowRight, Play, Star, Shield, Zap, Smartphone, DollarSign, Target, Users } from "lucide-react"
+import { ArrowRight, Play, Star, Shield, Zap, Smartphone, DollarSign, Target, Users, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import styles from "./Hero.module.css"
 
@@ -77,14 +77,18 @@ export default function Hero() {
                 </div>
                 <div className={styles.taskList}>
                   <div className={styles.taskItem}>
-                    <div className={styles.taskIcon}>✅</div>
+                    <div className={styles.taskIcon}>
+                      <Check size={18} />
+                    </div>
                     <div className={styles.taskInfo}>
                       <div className={styles.taskName}>Daily Check-in</div>
                       <div className={styles.taskReward}>+₦50</div>
                     </div>
                   </div>
                   <div className={styles.taskItem}>
-                    <div className={styles.taskIcon}>📱</div>
+                    <div className={styles.taskIcon}>
+                      <Smartphone size={18} />
+                    </div>
                     <div className={styles.taskInfo}>
                       <div className={styles.taskName}>Share on WhatsApp</div>
                       <div className={styles.taskReward}>+₦100</div>

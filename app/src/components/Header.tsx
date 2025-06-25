@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import styles from "./Header.module.css"
 
 export default function Header() {
@@ -30,10 +31,12 @@ export default function Header() {
         </nav>
 
         <div className={styles.authButtons}>
-          <Button variant="ghost" className={styles.loginBtn}>
-            Login
-          </Button>
-          <Button className={styles.registerBtn}>Register</Button>
+          <Link href="/auth/signin" className={styles.loginBtn}>
+            Sign In
+          </Link>
+          <Link href="/auth/signup" className={styles.registerBtn}>
+            Create Account
+          </Link>
         </div>
 
         <button className={styles.mobileMenuBtn} onClick={() => setIsMenuOpen(!isMenuOpen)}>

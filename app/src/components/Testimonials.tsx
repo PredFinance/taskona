@@ -1,4 +1,4 @@
-import { Star, Quote } from "lucide-react"
+import { Star, Quote, ShieldCheck, DollarSign, Phone } from "lucide-react"
 import styles from "./Testimonials.module.css"
 
 export default function Testimonials() {
@@ -58,7 +58,7 @@ export default function Testimonials() {
             <div className={styles.statLabel}>Active Users</div>
           </div>
           <div className={styles.stat}>
-            <div className={styles.statNumber}>₦2.5B+</div>
+            <div className={styles.statNumber}>₦2.5M+</div>
             <div className={styles.statLabel}>Total Paid Out</div>
           </div>
           <div className={styles.stat}>
@@ -116,15 +116,21 @@ export default function Testimonials() {
             </p>
             <div className={styles.trustFeatures}>
               <div className={styles.trustFeature}>
-                <div className={styles.trustFeatureIcon}>🔒</div>
+                <div className={styles.trustFeatureIcon}>
+                  <ShieldCheck size={20} />
+                </div>
                 <span>100% Secure Platform</span>
               </div>
               <div className={styles.trustFeature}>
-                <div className={styles.trustFeatureIcon}>💰</div>
+                <div className={styles.trustFeatureIcon}>
+                  <DollarSign size={20} />
+                </div>
                 <span>Guaranteed Payments</span>
               </div>
               <div className={styles.trustFeature}>
-                <div className={styles.trustFeatureIcon}>📞</div>
+                <div className={styles.trustFeatureIcon}>
+                  <Phone size={20} />
+                </div>
                 <span>24/7 Support</span>
               </div>
             </div>
