@@ -31,7 +31,7 @@ export default function ComprehensiveWithdrawModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Withdrawal criteria - can be configured by admin
-  const minimumWithdrawal = 1000
+  const minimumWithdrawal = 10000 // Changed from 1000 to 10000
   const maximumWithdrawal = 100000 // ₦100,000 per request
   const withdrawalFee = 50
   const processingTime = "24-48 hours"
@@ -160,7 +160,7 @@ export default function ComprehensiveWithdrawModal({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">

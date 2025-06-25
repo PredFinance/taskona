@@ -15,6 +15,7 @@ import {
   X,
   Bell,
   Shield,
+  ArrowDownLeft,
 } from "lucide-react"
 import { getCurrentUser, signOutUser } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
@@ -72,6 +73,7 @@ export default function AdminLayout({ children, activeTab }: AdminLayoutProps) {
     { id: "users", label: "Users", icon: Users, href: "/admin/users" },
     { id: "tasks", label: "Tasks", icon: ClipboardList, href: "/admin/tasks" },
     { id: "transactions", label: "Transactions", icon: CreditCard, href: "/admin/transactions" },
+    { id: "withdrawals", label: "Withdrawals", icon: ArrowDownLeft, href: "/admin/withdrawals" },
     { id: "referrals", label: "Referrals", icon: UserCheck, href: "/admin/referrals" },
     { id: "settings", label: "Settings", icon: Settings, href: "/admin/settings" },
   ]
