@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, addDoc } from "firebase/firestore"
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY
 
@@ -43,14 +44,15 @@ export async function POST(request: NextRequest) {
     const response = await res.json()
 
     if (response.status) {
-      // Store transaction in database
-      await supabase.from("transactions").insert({
+      // Store transaction in Firestore
+      await addDoc(collection(db, "transactions"), {
         user_id: userId,
         type,
         amount: amountInKobo / 100, // Store in naira
         reference,
         status: "pending",
         description: type === "activation" ? "Account activation fee" : `${type} payment`,
+        created_at: new Date().toISOString(),
       })
 
       return NextResponse.json({
