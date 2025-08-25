@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/firebase"
-import { collection, addDoc } from "firebase/firestore"
+import { collection, addDoc, doc, setDoc } from "firebase/firestore"
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY
 
@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Minimum amount is ₦1" }, { status: 400 })
     }
 
-    // Get the origin from the request URL
-    const origin = new URL(request.url).origin
+    // Use a publicly accessible URL for the callback
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin
 
     // Generate unique reference
     const reference = `TSK_${type.toUpperCase()}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         email,
         amount: amountInKobo, // Amount in kobo
         reference,
-        callback_url: `${origin}/payment/callback`,
+        callback_url: `${appUrl}/payment/callback`,
         metadata: {
           userId,
           type,
@@ -44,8 +44,9 @@ export async function POST(request: NextRequest) {
     const response = await res.json()
 
     if (response.status) {
-      // Store transaction in Firestore
-      await addDoc(collection(db, "transactions"), {
+      // Store transaction in Firestore using the reference as the document ID
+      const transactionRef = doc(db, "transactions", reference)
+      await setDoc(transactionRef, {
         user_id: userId,
         type,
         amount: amountInKobo / 100, // Store in naira
