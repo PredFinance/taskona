@@ -11,6 +11,7 @@ import toast from "react-hot-toast"
 import { signInUser } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { auth } from "@/lib/firebase"
 
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -27,11 +28,9 @@ export default function SignInForm() {
 
   // Show toast if redirected after email verification
   useEffect(() => {
-    const type = searchParams.get("type")
-    if (type === "signup" || type === "email_confirm") {
+    const mode = searchParams.get("mode")
+    if (mode === "verifyEmail") {
       toast.success("Email verified successfully! You can now sign in.")
-      // Optionally, remove the query param from the URL
-      // router.replace("/auth/signin", { scroll: false })
     }
   }, [searchParams])
 
@@ -46,17 +45,18 @@ export default function SignInForm() {
   const onSubmit = async (data: SignInFormData) => {
     setIsLoading(true)
     try {
-      await signInUser(data.email, data.password)
+      const userCredential = await signInUser(data.email, data.password)
+      if (!userCredential.user.emailVerified) {
+        toast.error("Please verify your email address first.")
+        setIsLoading(false)
+        return
+      }
       toast.success("Welcome back!")
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Sign in error:", error)
-
-      // Handle specific Supabase auth errors
-      if (error.message.includes("Invalid login credentials")) {
+      if (error.code === "auth/invalid-credential") {
         toast.error("Invalid email or password")
-      } else if (error.message.includes("Email not confirmed")) {
-        toast.error("Please verify your email address first")
       } else {
         toast.error(error.message || "Failed to sign in")
       }
