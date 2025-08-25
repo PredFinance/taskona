@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AdminLayout from "@/components/admin/admin-layout"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, getDocs, query, orderBy, updateDoc, doc, deleteDoc } from "firebase/firestore"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
 import { ClipboardList, Plus, Edit, Trash2, Eye, ToggleLeft, ToggleRight } from "lucide-react"
@@ -21,14 +22,12 @@ export default function AdminTasksPage() {
   }, [])
 
   const loadTasks = async () => {
+    setIsLoading(true)
     try {
-      const { data: tasksData, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .order("created_at", { ascending: false })
-
-      if (error) throw error
-      setTasks(tasksData || [])
+      const tasksQuery = query(collection(db, "tasks"), orderBy("created_at", "desc"))
+      const tasksSnapshot = await getDocs(tasksQuery)
+      const tasksData = tasksSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Task[]
+      setTasks(tasksData)
     } catch (error) {
       console.error("Error loading tasks:", error)
       toast.error("Failed to load tasks")
@@ -39,9 +38,8 @@ export default function AdminTasksPage() {
 
   const handleToggleTask = async (taskId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase.from("tasks").update({ is_active: !currentStatus }).eq("id", taskId)
-
-      if (error) throw error
+      const taskRef = doc(db, "tasks", taskId)
+      await updateDoc(taskRef, { is_active: !currentStatus })
 
       toast.success(`Task ${!currentStatus ? "activated" : "deactivated"} successfully`)
       loadTasks()
@@ -55,10 +53,7 @@ export default function AdminTasksPage() {
     if (!confirm("Are you sure you want to delete this task?")) return
 
     try {
-      const { error } = await supabase.from("tasks").delete().eq("id", taskId)
-
-      if (error) throw error
-
+      await deleteDoc(doc(db, "tasks", taskId))
       toast.success("Task deleted successfully")
       loadTasks()
     } catch (error) {

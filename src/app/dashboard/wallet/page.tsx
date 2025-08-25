@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { getCurrentUser } from "@/lib/supabase"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore"
 import type { User, Transaction, Withdrawal } from "@/lib/types"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
@@ -28,32 +29,41 @@ export default function WalletPage() {
   }, [])
 
   const loadWalletData = async () => {
+    setIsLoading(true)
     try {
-      const currentUser = await getCurrentUser()
-      if (!currentUser) return
+      const currentUser = (await getCurrentUser()) as User | null
+      if (!currentUser) {
+        setIsLoading(false)
+        return
+      }
 
       setUser(currentUser)
 
       // Load transactions
-      const { data: transactionsData } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", currentUser.id)
-        .order("created_at", { ascending: false })
-        .limit(10)
+      const transactionsQuery = query(
+        collection(db, "transactions"),
+        where("user_id", "==", currentUser.id),
+        orderBy("created_at", "desc"),
+        limit(10),
+      )
+      const transactionsSnapshot = await getDocs(transactionsQuery)
+      const transactionsData = transactionsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Transaction[]
 
       // Load withdrawals
-      const { data: withdrawalsData } = await supabase
-        .from("withdrawals")
-        .select("*")
-        .eq("user_id", currentUser.id)
-        .order("created_at", { ascending: false })
-        .limit(5)
+      const withdrawalsQuery = query(
+        collection(db, "withdrawals"),
+        where("user_id", "==", currentUser.id),
+        orderBy("created_at", "desc"),
+        limit(5),
+      )
+      const withdrawalsSnapshot = await getDocs(withdrawalsQuery)
+      const withdrawalsData = withdrawalsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Withdrawal[]
 
-      setTransactions(transactionsData || [])
-      setWithdrawals(withdrawalsData || [])
+      setTransactions(transactionsData)
+      setWithdrawals(withdrawalsData)
     } catch (error) {
       console.error("Error loading wallet data:", error)
+      toast.error("Failed to load wallet data")
     } finally {
       setIsLoading(false)
     }

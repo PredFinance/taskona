@@ -4,7 +4,8 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Minus, AlertCircle, Info, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, addDoc, doc, runTransaction } from "firebase/firestore"
 import toast from "react-hot-toast"
 
 interface ComprehensiveWithdrawModalProps {
@@ -67,44 +68,51 @@ export default function ComprehensiveWithdrawModal({
 
     setIsSubmitting(true)
     try {
-      // Create withdrawal request
-      const { data: withdrawal, error: withdrawalError } = await supabase
-        .from("withdrawals")
-        .insert({
+      const withdrawalRef = doc(collection(db, "withdrawals"))
+      const transactionRef = doc(collection(db, "transactions"))
+      const userRef = doc(db, "users", userId)
+      const withdrawalReference = `WTH_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`
+
+      await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef)
+        if (!userDoc.exists()) {
+          throw new Error("User does not exist.")
+        }
+        const currentBalance = userDoc.data().balance || 0
+        const totalDeduction = withdrawAmount + withdrawalFee
+
+        if (totalDeduction > currentBalance) {
+          throw new Error("Insufficient balance.")
+        }
+
+        // 1. Create withdrawal request
+        transaction.set(withdrawalRef, {
           user_id: userId,
           amount: withdrawAmount,
           bank_name: bankName,
           account_number: accountNumber,
           account_name: accountName,
           status: "pending",
-          reference: `WTH_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+          reference: withdrawalReference,
           processing_fee: withdrawalFee,
           user_email: userEmail,
+          created_at: new Date().toISOString(),
         })
-        .select()
-        .single()
 
-      if (withdrawalError) throw withdrawalError
+        // 2. Create transaction record
+        transaction.set(transactionRef, {
+          user_id: userId,
+          type: "withdrawal_request",
+          amount: withdrawAmount,
+          status: "pending",
+          reference: withdrawalReference,
+          description: `Withdrawal request to ${bankName} - ${accountNumber}`,
+          created_at: new Date().toISOString(),
+        })
 
-      // Create transaction record
-      const { error: transactionError } = await supabase.from("transactions").insert({
-        user_id: userId,
-        type: "withdrawal_request",
-        amount: withdrawAmount,
-        status: "pending",
-        reference: withdrawal.reference,
-        description: `Withdrawal request to ${bankName} - ${accountNumber}`,
+        // 3. Deduct amount from balance immediately
+        transaction.update(userRef, { balance: currentBalance - totalDeduction })
       })
-
-      if (transactionError) throw transactionError
-
-      // Deduct amount from balance immediately (including fee)
-      const { error: balanceError } = await supabase
-        .from("users")
-        .update({ balance: currentBalance - (withdrawAmount + withdrawalFee) })
-        .eq("id", userId)
-
-      if (balanceError) throw balanceError
 
       toast.success("Withdrawal request submitted successfully!")
       onSuccess()

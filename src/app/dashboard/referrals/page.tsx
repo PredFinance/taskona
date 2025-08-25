@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { getCurrentUser } from "@/lib/supabase"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebase/firestore"
 import type { User } from "@/lib/types"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
@@ -41,71 +42,48 @@ export default function ReferralsPage() {
   }, [])
 
   const loadReferralData = async () => {
+    setIsLoading(true)
     try {
       const currentUser = await getCurrentUser()
-      if (!currentUser) return
-
-      setUser(currentUser)
-
-      // Load referrals with user details
-      const { data: referralsData, error } = await supabase
-        .from("referrals")
-        .select(`
-          id,
-          referrer_id,
-          referred_id,
-          bonus_paid,
-          created_at,
-          referred_user:users!referrals_referred_id_fkey(
-            id,
-            full_name,
-            email,
-            is_activated,
-            created_at
-          )
-        `)
-        .eq("referrer_id", currentUser.id)
-        .order("created_at", { ascending: false })
-
-      if (error) {
-        console.error("Error loading referrals:", error)
-        // If there's an error, set empty data
-        setReferrals([])
-        setStats({
-          totalReferrals: 0,
-          totalEarned: 0,
-          pendingReferrals: 0,
-        })
-      } else {
-        // Map referred_user from array to object
-        const normalizedReferrals =
-          referralsData?.map((ref) => ({
-            ...ref,
-            referred_user: Array.isArray(ref.referred_user)
-              ? ref.referred_user[0] || null
-              : ref.referred_user || null,
-          })) || []
-
-        // Calculate stats
-        const totalReferrals = normalizedReferrals.length
-        const totalEarned = normalizedReferrals.reduce((sum, ref) => sum + ref.bonus_paid, 0)
-        const pendingReferrals = normalizedReferrals.filter((ref) => !ref.referred_user?.is_activated).length
-
-        setReferrals(normalizedReferrals)
-        setStats({
-          totalReferrals,
-          totalEarned,
-          pendingReferrals,
-        })
+      if (!currentUser) {
+        setIsLoading(false)
+        return
       }
+
+      setUser(currentUser as User)
+
+      const referralsQuery = query(
+        collection(db, "referrals"),
+        where("referrer_id", "==", currentUser.id),
+        orderBy("created_at", "desc"),
+      )
+      const referralsSnapshot = await getDocs(referralsQuery)
+
+      const referralsData: ReferralData[] = await Promise.all(
+        referralsSnapshot.docs.map(async (referralDoc) => {
+          const data = referralDoc.data()
+          const referredUserDoc = data.referred_id ? await getDoc(doc(db, "users", data.referred_id)) : null
+          return {
+            id: referralDoc.id,
+            ...data,
+            referred_user: referredUserDoc?.exists() ? (referredUserDoc.data() as User) : null,
+          } as ReferralData
+        }),
+      )
+
+      const totalReferrals = referralsData.length
+      const totalEarned = referralsData.reduce((sum, ref) => sum + ref.bonus_paid, 0)
+      const pendingReferrals = referralsData.filter((ref) => !ref.referred_user?.is_activated).length
+
+      setReferrals(referralsData)
+      setStats({
+        totalReferrals,
+        totalEarned,
+        pendingReferrals,
+      })
     } catch (error) {
       console.error("Error loading referral data:", error)
-      setReferrals([])
-      setStats({
-        totalReferrals: 0,
-        totalEarned: 0,
-        pendingReferrals: 0,
-      })
+      toast.error("Failed to load referral data")
     } finally {
       setIsLoading(false)
     }

@@ -3,11 +3,23 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AdminLayout from "@/components/admin/admin-layout"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  doc,
+  getDoc,
+  updateDoc,
+  writeBatch,
+  addDoc,
+} from "firebase/firestore"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
 import { Users, TrendingUp, Gift, DollarSign } from "lucide-react"
 import toast from "react-hot-toast"
+import type { User } from "@/lib/types"
 
 interface ReferralWithUsers {
   id: string
@@ -15,16 +27,8 @@ interface ReferralWithUsers {
   referred_id: string
   bonus_paid: number
   created_at: string
-  referrer: {
-    full_name: string
-    email: string
-    referral_code: string
-  }
-  referred: {
-    full_name: string
-    email: string
-    is_activated: boolean
-  }
+  referrer: User | null
+  referred: User | null
 }
 
 export default function AdminReferralsPage() {
@@ -42,26 +46,33 @@ export default function AdminReferralsPage() {
   }, [])
 
   const loadReferralData = async () => {
+    setIsLoading(true)
     try {
-      // Load referrals with user details
-      const { data: referralsData, error } = await supabase
-        .from("referrals")
-        .select(`
-          *,
-          referrer:users!referrals_referrer_id_fkey(full_name, email, referral_code),
-          referred:users!referrals_referred_id_fkey(full_name, email, is_activated)
-        `)
-        .order("created_at", { ascending: false })
+      const referralsQuery = query(collection(db, "referrals"), orderBy("created_at", "desc"))
+      const referralsSnapshot = await getDocs(referralsQuery)
 
-      if (error) throw error
+      const referralsData: ReferralWithUsers[] = await Promise.all(
+        referralsSnapshot.docs.map(async (referralDoc) => {
+          const data = referralDoc.data()
+          const referrerDoc = await getDoc(doc(db, "users", data.referrer_id))
+          const referredDoc = await getDoc(doc(db, "users", data.referred_id))
+
+          return {
+            id: referralDoc.id,
+            ...data,
+            referrer: referrerDoc.exists() ? (referrerDoc.data() as User) : null,
+            referred: referredDoc.exists() ? (referredDoc.data() as User) : null,
+          } as ReferralWithUsers
+        }),
+      )
 
       // Calculate stats
-      const totalReferrals = referralsData?.length || 0
-      const activatedReferrals = referralsData?.filter((r) => r.referred?.is_activated).length || 0
-      const totalBonusPaid = referralsData?.reduce((sum, r) => sum + r.bonus_paid, 0) || 0
+      const totalReferrals = referralsData.length
+      const activatedReferrals = referralsData.filter((r) => r.referred?.is_activated).length
+      const totalBonusPaid = referralsData.reduce((sum, r) => sum + r.bonus_paid, 0)
       const pendingReferrals = totalReferrals - activatedReferrals
 
-      setReferrals(referralsData || [])
+      setReferrals(referralsData)
       setStats({
         totalReferrals,
         activatedReferrals,
@@ -79,46 +90,34 @@ export default function AdminReferralsPage() {
   const handlePayBonus = async (referralId: string) => {
     try {
       const bonusAmount = 300 // ₦300 referral bonus
+      const referral = referrals.find((r) => r.id === referralId)
+      if (!referral || !referral.referrer) return
+
+      const batch = writeBatch(db)
 
       // Update referral bonus
-      const { error: referralError } = await supabase
-        .from("referrals")
-        .update({ bonus_paid: bonusAmount })
-        .eq("id", referralId)
-
-      if (referralError) throw referralError
-
-      // Get referrer details
-      const referral = referrals.find((r) => r.id === referralId)
-      if (!referral) return
+      const referralRef = doc(db, "referrals", referralId)
+      batch.update(referralRef, { bonus_paid: bonusAmount })
 
       // Update referrer balance
-      const { data: referrer } = await supabase
-        .from("users")
-        .select("balance, total_earned")
-        .eq("id", referral.referrer_id)
-        .single()
+      const referrerRef = doc(db, "users", referral.referrer_id)
+      const newBalance = (referral.referrer.balance || 0) + bonusAmount
+      const newTotalEarned = (referral.referrer.total_earned || 0) + bonusAmount
+      batch.update(referrerRef, { balance: newBalance, total_earned: newTotalEarned })
 
-      if (referrer) {
-        await supabase
-          .from("users")
-          .update({
-            balance: referrer.balance + bonusAmount,
-            total_earned: referrer.total_earned + bonusAmount,
-          })
-          .eq("id", referral.referrer_id)
+      // Create transaction record
+      const transactionRef = doc(collection(db, "transactions"))
+      batch.set(transactionRef, {
+        user_id: referral.referrer_id,
+        type: "referral_bonus",
+        amount: bonusAmount,
+        status: "completed",
+        reference: `REF_${Date.now()}`,
+        description: `Referral bonus for ${referral.referred?.full_name}`,
+        created_at: new Date().toISOString(),
+      })
 
-        // Create transaction record
-        await supabase.from("transactions").insert({
-          user_id: referral.referrer_id,
-          type: "referral_bonus",
-          amount: bonusAmount,
-          status: "completed",
-          reference: `REF_${Date.now()}`,
-          description: `Referral bonus for ${referral.referred?.full_name}`,
-        })
-      }
-
+      await batch.commit()
       toast.success("Referral bonus paid successfully")
       loadReferralData()
     } catch (error) {

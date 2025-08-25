@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Copy, Share2, TrendingUp, Crown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, query, where, getDocs } from "firebase/firestore"
 import toast from "react-hot-toast"
 
 interface ReferralStats {
@@ -34,20 +35,25 @@ export default function ReferralPriority({
   }, [userId])
 
   const loadReferralStats = async () => {
+    setIsLoading(true)
     try {
-      // Load referral data
-      const { data: referrals } = await supabase
-        .from("referrals")
-        .select(`
-          *,
-          referred_user:users!referrals_referred_id_fkey(is_activated)
-        `)
-        .eq("referrer_id", userId)
+      const referralsQuery = query(collection(db, "referrals"), where("referrer_id", "==", userId))
+      const referralsSnapshot = await getDocs(referralsQuery)
 
-      if (referrals) {
+      if (!referralsSnapshot.empty) {
+        const referrals = referralsSnapshot.docs.map((doc) => doc.data())
+        const referredUserIds = referrals.map((r) => r.referred_id)
+        
+        let activatedReferrals = 0;
+        if(referredUserIds.length > 0){
+          const referredUsersQuery = query(collection(db, "users"), where("id", "in", referredUserIds), where("is_activated", "==", true))
+          const referredUsersSnapshot = await getDocs(referredUsersQuery)
+          activatedReferrals = referredUsersSnapshot.size
+        }
+
+
         const totalReferrals = referrals.length
-        const activatedReferrals = referrals.filter((r) => r.referred_user?.is_activated).length
-        const totalEarned = referrals.reduce((sum, r) => sum + r.bonus_paid, 0)
+        const totalEarned = referrals.reduce((sum, r) => sum + (r.bonus_paid || 0), 0)
         const pendingReferrals = totalReferrals - activatedReferrals
 
         setStats({

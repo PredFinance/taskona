@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Flame, Edit, Save, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, getDocs, query, orderBy, doc, updateDoc } from "firebase/firestore"
 import toast from "react-hot-toast"
 
 interface StreakReward {
@@ -26,11 +27,12 @@ export default function StreakManagement() {
   }, [])
 
   const loadRewards = async () => {
+    setIsLoading(true)
     try {
-      const { data, error } = await supabase.from("streak_rewards").select("*").order("day", { ascending: true })
-
-      if (error) throw error
-      setRewards(data || [])
+      const rewardsQuery = query(collection(db, "streak_rewards"), orderBy("day", "asc"))
+      const rewardsSnapshot = await getDocs(rewardsQuery)
+      const rewardsData = rewardsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as StreakReward[]
+      setRewards(rewardsData)
     } catch (error) {
       console.error("Error loading rewards:", error)
       toast.error("Failed to load streak rewards")
@@ -41,9 +43,8 @@ export default function StreakManagement() {
 
   const updateReward = async (id: string, updates: Partial<StreakReward>) => {
     try {
-      const { error } = await supabase.from("streak_rewards").update(updates).eq("id", id)
-
-      if (error) throw error
+      const rewardRef = doc(db, "streak_rewards", id)
+      await updateDoc(rewardRef, updates)
 
       setRewards((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)))
       setEditingId(null)

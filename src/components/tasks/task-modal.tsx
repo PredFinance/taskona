@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import type { Task, Question } from "@/lib/types"
 import toast from "react-hot-toast"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, addDoc, runTransaction, doc } from "firebase/firestore"
 
 interface TaskModalProps {
   task: Task | null
@@ -55,25 +56,30 @@ export default function TaskModal({ task, isOpen, onClose, onComplete, userId }:
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
-      // Submit task completion
-      const { error } = await supabase.from("user_tasks").insert({
-        user_id: userId,
-        task_id: task.id,
-        status: "completed",
-        answers: answers,
-        completed_at: new Date().toISOString(),
-        reward_paid: task.reward_amount,
+      await runTransaction(db, async (transaction) => {
+        // 1. Create user_task record
+        const userTaskRef = doc(collection(db, "user_tasks"))
+        transaction.set(userTaskRef, {
+          user_id: userId,
+          task_id: task.id,
+          status: "completed",
+          answers: answers,
+          completed_at: new Date().toISOString(),
+          reward_paid: task.reward_amount,
+          created_at: new Date().toISOString(),
+        })
+
+        // 2. Update user balance
+        const userRef = doc(db, "users", userId)
+        const userDoc = await transaction.get(userRef)
+        if (userDoc.exists()) {
+          const newBalance = (userDoc.data().balance || 0) + task.reward_amount
+          const newTotalEarned = (userDoc.data().total_earned || 0) + task.reward_amount
+          transaction.update(userRef, { balance: newBalance, total_earned: newTotalEarned })
+        } else {
+          throw new Error("User not found.")
+        }
       })
-
-      if (error) throw error
-
-      // Update user balance
-      const { error: balanceError } = await supabase.rpc("add_to_balance", {
-        user_id: userId,
-        amount: task.reward_amount,
-      })
-
-      if (balanceError) throw balanceError
 
       toast.success(`Task completed! You earned ₦${task.reward_amount}`)
       onComplete()
@@ -161,7 +167,7 @@ export default function TaskModal({ task, isOpen, onClose, onComplete, userId }:
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -175,7 +181,7 @@ export default function TaskModal({ task, isOpen, onClose, onComplete, userId }:
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1">
               {questions.length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
@@ -225,33 +231,34 @@ export default function TaskModal({ task, isOpen, onClose, onComplete, userId }:
                       {renderQuestion(currentQuestion)}
                     </div>
                   )}
-
-                  {/* Navigation */}
-                  <div className="flex items-center justify-between">
-                    <Button onClick={handlePrevious} disabled={currentQuestionIndex === 0} variant="outline">
-                      Previous
-                    </Button>
-
-                    <Button
-                      onClick={handleNext}
-                      disabled={isSubmitting}
-                      className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
-                    >
-                      {isSubmitting ? (
-                        <div className="flex items-center">
-                          <Spinner size="sm" className="mr-2" />
-                          Submitting...
-                        </div>
-                      ) : isLastQuestion ? (
-                        "Submit Task"
-                      ) : (
-                        "Next"
-                      )}
-                    </Button>
-                  </div>
                 </div>
               )}
             </div>
+            {/* Footer */}
+            {questions.length > 0 && (
+              <div className="flex items-center justify-between p-6 border-t border-gray-200">
+                <Button onClick={handlePrevious} disabled={currentQuestionIndex === 0} variant="outline">
+                  Previous
+                </Button>
+
+                <Button
+                  onClick={handleNext}
+                  disabled={isSubmitting}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <Spinner size="sm" className="mr-2" />
+                      Submitting...
+                    </div>
+                  ) : isLastQuestion ? (
+                    "Submit Task"
+                  ) : (
+                    "Next"
+                  )}
+                </Button>
+              </div>
+            )}
           </motion.div>
         </div>
       )}

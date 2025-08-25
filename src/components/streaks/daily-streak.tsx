@@ -4,7 +4,19 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Flame, Gift, Clock, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import {
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  increment,
+  runTransaction,
+  query,
+  orderBy,
+  getDocs,
+} from "firebase/firestore"
 import toast from "react-hot-toast"
 
 interface StreakData {
@@ -17,6 +29,7 @@ interface StreakData {
 }
 
 interface StreakReward {
+  id: string
   day: number
   base_amount: number
   bonus_amount: number
@@ -36,10 +49,13 @@ export default function DailyStreak({ userId }: { userId: string }) {
   }, [userId])
 
   const loadStreakData = async () => {
+    setIsLoading(true)
     try {
-      const { data: streak } = await supabase.from("streaks").select("*").eq("user_id", userId).single()
+      const streakRef = doc(db, "streaks", userId)
+      const streakSnap = await getDoc(streakRef)
 
-      if (streak) {
+      if (streakSnap.exists()) {
+        const streak = streakSnap.data()
         const today = new Date().toISOString().split("T")[0]
         const lastClaim = streak.last_claim_date
         const canClaim = !lastClaim || lastClaim < today
@@ -53,15 +69,16 @@ export default function DailyStreak({ userId }: { userId: string }) {
           next_claim: canClaim ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         })
       } else {
-        // No streak record yet
-        setStreakData({
+        // No streak record yet, create one
+        const initialStreakData = {
+          user_id: userId,
           current_streak: 0,
           longest_streak: 0,
           last_claim_date: null,
           total_claimed: 0,
-          can_claim: true,
-          next_claim: null,
-        })
+        }
+        await setDoc(streakRef, initialStreakData)
+        setStreakData({ ...initialStreakData, can_claim: true, next_claim: null })
       }
     } catch (error) {
       console.error("Error loading streak data:", error)
@@ -72,29 +89,59 @@ export default function DailyStreak({ userId }: { userId: string }) {
 
   const loadRewards = async () => {
     try {
-      const { data } = await supabase.from("streak_rewards").select("*").order("day", { ascending: true })
-
-      setRewards(data || [])
+      const rewardsQuery = query(collection(db, "streak_rewards"), orderBy("day", "asc"))
+      const rewardsSnapshot = await getDocs(rewardsQuery)
+      const rewardsData = rewardsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as StreakReward[]
+      setRewards(rewardsData)
     } catch (error) {
       console.error("Error loading rewards:", error)
     }
   }
 
   const claimStreak = async () => {
+    if (!streakData?.can_claim) {
+      toast.error("You have already claimed your reward for today.")
+      return
+    }
     setIsClaiming(true)
     try {
-      const { data, error } = await supabase.rpc("claim_daily_streak", {
-        p_user_id: userId,
+      const nextDay = (streakData?.current_streak || 0) + 1
+      const reward = rewards.find((r) => r.day === (nextDay > 15 ? 1 : nextDay)) // Loop after day 15
+      if (!reward) {
+        toast.error("Could not find a reward for today. Please try again later.")
+        return
+      }
+      const claimAmount = reward.base_amount + reward.bonus_amount
+
+      await runTransaction(db, async (transaction) => {
+        const streakRef = doc(db, "streaks", userId)
+        const userRef = doc(db, "users", userId)
+
+        const streakSnap = await transaction.get(streakRef)
+        const userSnap = await transaction.get(userRef)
+
+        if (!streakSnap.exists() || !userSnap.exists()) {
+          throw new Error("User or streak data not found.")
+        }
+        const currentStreakData = streakSnap.data()
+        const currentUserData = userSnap.data()
+
+        const newStreak = currentStreakData.current_streak + 1
+        transaction.update(streakRef, {
+          current_streak: newStreak,
+          longest_streak: Math.max(newStreak, currentStreakData.longest_streak),
+          last_claim_date: new Date().toISOString().split("T")[0],
+          total_claimed: increment(claimAmount),
+        })
+
+        transaction.update(userRef, {
+          balance: increment(claimAmount),
+          total_earned: increment(claimAmount),
+        })
       })
 
-      if (error) throw error
-
-      if (data.success) {
-        toast.success(`🎉 Day ${data.day} claimed! +₦${data.amount}`)
-        loadStreakData() // Reload streak data
-      } else {
-        toast.error(data.message)
-      }
+      toast.success(`🎉 Day ${nextDay} claimed! +₦${claimAmount}`)
+      loadStreakData() // Reload streak data
     } catch (error: any) {
       toast.error(error.message || "Failed to claim streak")
     } finally {
@@ -199,7 +246,7 @@ export default function DailyStreak({ userId }: { userId: string }) {
 
           return (
             <div
-              key={reward.day}
+              key={reward.id}
               className={`
                 relative p-2 rounded-lg text-center text-xs transition-all
                 ${

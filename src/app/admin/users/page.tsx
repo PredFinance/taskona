@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AdminLayout from "@/components/admin/admin-layout"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, getDocs, query, orderBy, doc, updateDoc } from "firebase/firestore"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
 import { Users, Search, Filter, UserCheck, UserX, Eye } from "lucide-react"
@@ -23,14 +24,12 @@ export default function AdminUsersPage() {
   }, [])
 
   const loadUsers = async () => {
+    setIsLoading(true)
     try {
-      const { data: usersData, error } = await supabase
-        .from("users")
-        .select("*")
-        .order("created_at", { ascending: false })
-
-      if (error) throw error
-      setUsers(usersData || [])
+      const usersQuery = query(collection(db, "users"), orderBy("created_at", "desc"))
+      const usersSnapshot = await getDocs(usersQuery)
+      const usersData = usersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as User[]
+      setUsers(usersData)
     } catch (error) {
       console.error("Error loading users:", error)
       toast.error("Failed to load users")
@@ -41,16 +40,11 @@ export default function AdminUsersPage() {
 
   const handleActivateUser = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from("users")
-        .update({
-          is_activated: true,
-          activation_date: new Date().toISOString(),
-        })
-        .eq("id", userId)
-
-      if (error) throw error
-
+      const userRef = doc(db, "users", userId)
+      await updateDoc(userRef, {
+        is_activated: true,
+        activation_date: new Date().toISOString(),
+      })
       toast.success("User activated successfully")
       loadUsers()
     } catch (error) {
@@ -61,10 +55,8 @@ export default function AdminUsersPage() {
 
   const handleDeactivateUser = async (userId: string) => {
     try {
-      const { error } = await supabase.from("users").update({ is_activated: false }).eq("id", userId)
-
-      if (error) throw error
-
+      const userRef = doc(db, "users", userId)
+      await updateDoc(userRef, { is_activated: false })
       toast.success("User deactivated successfully")
       loadUsers()
     } catch (error) {

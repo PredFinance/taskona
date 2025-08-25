@@ -3,7 +3,19 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AdminLayout from "@/components/admin/admin-layout"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  doc,
+  getDoc,
+  updateDoc,
+  runTransaction,
+  where,
+  addDoc,
+} from "firebase/firestore"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
 import { Check, X, Eye, Filter, Settings, AlertCircle, Clock, CheckCircle2, XCircle } from "lucide-react"
@@ -20,7 +32,7 @@ interface WithdrawalWithUser extends Withdrawal {
 }
 
 interface WithdrawalSettings {
-  id: number
+  id: string
   minimum_amount: number
   maximum_amount: number
   processing_fee: number
@@ -42,28 +54,31 @@ export default function AdminWithdrawalsPage() {
   }, [])
 
   const loadData = async () => {
+    setIsLoading(true)
     try {
       // Load withdrawals with user data
-      const { data: withdrawalsData, error: withdrawalsError } = await supabase
-        .from("withdrawals")
-        .select(`
-          *,
-          user:users(full_name, email, phone)
-        `)
-        .order("created_at", { ascending: false })
-
-      if (withdrawalsError) throw withdrawalsError
+      const withdrawalsQuery = query(collection(db, "withdrawals"), orderBy("created_at", "desc"))
+      const withdrawalsSnapshot = await getDocs(withdrawalsQuery)
+      const withdrawalsData = await Promise.all(
+        withdrawalsSnapshot.docs.map(async (withdrawalDoc) => {
+          const data = withdrawalDoc.data()
+          const userDoc = data.user_id ? await getDoc(doc(db, "users", data.user_id)) : null
+          return {
+            id: withdrawalDoc.id,
+            ...data,
+            user: userDoc?.exists() ? userDoc.data() : { full_name: "Unknown User" },
+          } as WithdrawalWithUser
+        }),
+      )
+      setWithdrawals(withdrawalsData)
 
       // Load withdrawal settings
-      const { data: settingsData, error: settingsError } = await supabase
-        .from("withdrawal_settings")
-        .select("*")
-        .single()
-
-      if (settingsError) throw settingsError
-
-      setWithdrawals(withdrawalsData || [])
-      setSettings(settingsData)
+      const settingsQuery = query(collection(db, "withdrawal_settings"), limit(1))
+      const settingsSnapshot = await getDocs(settingsQuery)
+      if (!settingsSnapshot.empty) {
+        const settingsDoc = settingsSnapshot.docs[0]
+        setSettings({ id: settingsDoc.id, ...settingsDoc.data() } as WithdrawalSettings)
+      }
     } catch (error) {
       console.error("Error loading data:", error)
       toast.error("Failed to load withdrawal data")
@@ -74,25 +89,31 @@ export default function AdminWithdrawalsPage() {
 
   const handleApproveWithdrawal = async (withdrawalId: string) => {
     try {
-      const { error } = await supabase
-        .from("withdrawals")
-        .update({
+      const withdrawal = withdrawals.find((w) => w.id === withdrawalId)
+      if (!withdrawal) return
+
+      await runTransaction(db, async (transaction) => {
+        const withdrawalRef = doc(db, "withdrawals", withdrawalId)
+        transaction.update(withdrawalRef, {
           status: "completed",
           processed_at: new Date().toISOString(),
           admin_notes: adminNotes || "Approved by admin",
         })
-        .eq("id", withdrawalId)
 
-      if (error) throw error
-
-      // Update transaction status
-      await supabase
-        .from("transactions")
-        .update({ status: "completed" })
-        .eq("reference", withdrawals.find((w) => w.id === withdrawalId)?.reference)
+        // Update transaction status
+        if (withdrawal.reference) {
+          const transQuery = query(collection(db, "transactions"), where("reference", "==", withdrawal.reference))
+          const transSnapshot = await getDocs(transQuery)
+          if (!transSnapshot.empty) {
+            const transRef = transSnapshot.docs[0].ref
+            transaction.update(transRef, { status: "completed" })
+          }
+        }
+      })
 
       toast.success("Withdrawal approved successfully")
       setAdminNotes("")
+      setSelectedWithdrawal(null)
       loadData()
     } catch (error) {
       console.error("Error approving withdrawal:", error)
@@ -105,44 +126,50 @@ export default function AdminWithdrawalsPage() {
       const withdrawal = withdrawals.find((w) => w.id === withdrawalId)
       if (!withdrawal) return
 
-      // Update withdrawal status
-      const { error: withdrawalError } = await supabase
-        .from("withdrawals")
-        .update({
+      await runTransaction(db, async (transaction) => {
+        const withdrawalRef = doc(db, "withdrawals", withdrawalId)
+        const userRef = doc(db, "users", withdrawal.user_id)
+
+        // Update withdrawal status
+        transaction.update(withdrawalRef, {
           status: "failed",
           admin_notes: adminNotes || "Rejected by admin",
           processed_at: new Date().toISOString(),
         })
-        .eq("id", withdrawalId)
 
-      if (withdrawalError) throw withdrawalError
+        // Update transaction status
+        if (withdrawal.reference) {
+          const transQuery = query(collection(db, "transactions"), where("reference", "==", withdrawal.reference))
+          const transSnapshot = await getDocs(transQuery)
+          if (!transSnapshot.empty) {
+            const transRef = transSnapshot.docs[0].ref
+            transaction.update(transRef, { status: "failed" })
+          }
+        }
 
-      // Update transaction status
-      await supabase.from("transactions").update({ status: "failed" }).eq("reference", withdrawal.reference)
+        // Refund the amount to user's balance
+        const userDoc = await transaction.get(userRef)
+        if (userDoc.exists()) {
+          const userData = userDoc.data()
+          const refundAmount = withdrawal.amount + (withdrawal.processing_fee || 0)
+          transaction.update(userRef, { balance: (userData.balance || 0) + refundAmount })
+        }
+      })
 
-      // Refund the amount to user's balance (including processing fee)
-      const { data: user } = await supabase.from("users").select("balance").eq("id", withdrawal.user_id).single()
-
-      if (user) {
-        const refundAmount = withdrawal.amount + (withdrawal.processing_fee || 50)
-        await supabase
-          .from("users")
-          .update({ balance: user.balance + refundAmount })
-          .eq("id", withdrawal.user_id)
-
-        // Create refund transaction
-        await supabase.from("transactions").insert({
-          user_id: withdrawal.user_id,
-          type: "refund",
-          amount: refundAmount,
-          status: "completed",
-          reference: `REF_${Date.now()}`,
-          description: `Refund for rejected withdrawal - ${withdrawal.reference}`,
-        })
-      }
+      // Create refund transaction
+      await addDoc(collection(db, "transactions"), {
+        user_id: withdrawal.user_id,
+        type: "refund",
+        amount: withdrawal.amount + (withdrawal.processing_fee || 0),
+        status: "completed",
+        reference: `REF_${Date.now()}`,
+        description: `Refund for rejected withdrawal - ${withdrawal.reference}`,
+        created_at: new Date().toISOString(),
+      })
 
       toast.success("Withdrawal rejected and amount refunded")
       setAdminNotes("")
+      setSelectedWithdrawal(null)
       loadData()
     } catch (error) {
       console.error("Error rejecting withdrawal:", error)
@@ -152,11 +179,11 @@ export default function AdminWithdrawalsPage() {
 
   const updateSettings = async (newSettings: Partial<WithdrawalSettings>) => {
     try {
-      const { error } = await supabase.from("withdrawal_settings").update(newSettings).eq("id", settings?.id)
+      if (!settings) return
+      const settingsRef = doc(db, "withdrawal_settings", settings.id)
+      await updateDoc(settingsRef, newSettings)
 
-      if (error) throw error
-
-      setSettings({ ...settings!, ...newSettings })
+      setSettings({ ...settings, ...newSettings })
       toast.success("Settings updated successfully")
     } catch (error) {
       console.error("Error updating settings:", error)

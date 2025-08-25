@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { getCurrentUser } from "@/lib/supabase"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { doc, updateDoc } from "firebase/firestore"
 import type { User } from "@/lib/types"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
@@ -26,7 +27,7 @@ export default function SettingsPage() {
 
   const loadUserData = async () => {
     try {
-      const currentUser = await getCurrentUser()
+      const currentUser = (await getCurrentUser()) as User | null
       if (!currentUser) return
 
       setUser(currentUser)
@@ -46,16 +47,12 @@ export default function SettingsPage() {
 
     setIsSaving(true)
     try {
-      const { error } = await supabase
-        .from("users")
-        .update({
-          full_name: formData.fullName,
-          phone: formData.phone || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id)
-
-      if (error) throw error
+      const userRef = doc(db, "users", user.id)
+      await updateDoc(userRef, {
+        full_name: formData.fullName,
+        phone: formData.phone || null,
+        updated_at: new Date().toISOString(),
+      })
 
       toast.success("Profile updated successfully")
       loadUserData()

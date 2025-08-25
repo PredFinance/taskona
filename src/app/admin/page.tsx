@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AdminLayout from "@/components/admin/admin-layout"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, getDocs, query, where, limit, orderBy } from "firebase/firestore"
 import { Spinner } from "@/components/ui/spinner"
 import { Users, ClipboardList, CreditCard, AlertTriangle, DollarSign, Activity, Flame } from "lucide-react"
 import StreakManagement from "@/components/admin/streak-management"
@@ -40,65 +41,63 @@ export default function AdminDashboard() {
   const loadAdminData = async () => {
     try {
       // Load user stats
-      const { count: totalUsers } = await supabase.from("users").select("*", { count: "exact", head: true })
-
-      const { count: activeUsers } = await supabase
-        .from("users")
-        .select("*", { count: "exact", head: true })
-        .eq("is_activated", true)
+      const usersSnapshot = await getDocs(collection(db, "users"))
+      const totalUsers = usersSnapshot.size
+      const activeUsers = usersSnapshot.docs.filter((doc) => doc.data().is_activated).length
 
       // Load task stats
-      const { count: totalTasks } = await supabase.from("tasks").select("*", { count: "exact", head: true })
-
-      const { count: activeTasks } = await supabase
-        .from("tasks")
-        .select("*", { count: "exact", head: true })
-        .eq("is_active", true)
+      const tasksSnapshot = await getDocs(collection(db, "tasks"))
+      const totalTasks = tasksSnapshot.size
+      const activeTasks = tasksSnapshot.docs.filter((doc) => doc.data().is_active).length
 
       // Load transaction stats
-      const { count: totalTransactions } = await supabase
-        .from("transactions")
-        .select("*", { count: "exact", head: true })
+      const transactionsSnapshot = await getDocs(collection(db, "transactions"))
+      const totalTransactions = transactionsSnapshot.size
 
-      const { data: revenueData } = await supabase
-        .from("transactions")
-        .select("amount")
-        .eq("type", "activation")
-        .eq("status", "completed")
-
-      const totalRevenue = revenueData?.reduce((sum, t) => sum + t.amount, 0) || 0
+      const revenueQuery = query(
+        collection(db, "transactions"),
+        where("type", "==", "activation"),
+        where("status", "==", "completed"),
+      )
+      const revenueSnapshot = await getDocs(revenueQuery)
+      const totalRevenue = revenueSnapshot.docs.reduce((sum, doc) => sum + doc.data().amount, 0)
 
       // Load withdrawal stats
-      const { count: pendingWithdrawals } = await supabase
-        .from("withdrawals")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending")
+      const pendingWithdrawalsQuery = query(collection(db, "withdrawals"), where("status", "==", "pending"))
+      const pendingWithdrawalsSnapshot = await getDocs(pendingWithdrawalsQuery)
+      const pendingWithdrawals = pendingWithdrawalsSnapshot.size
 
       // Load referral stats
-      const { count: totalReferrals } = await supabase.from("referrals").select("*", { count: "exact", head: true })
+      const referralsSnapshot = await getDocs(collection(db, "referrals"))
+      const totalReferrals = referralsSnapshot.size
 
       // Load recent activity
-      const { data: recentTransactions } = await supabase
-        .from("transactions")
-        .select(`
-          *,
-          user:users(full_name, email)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(5)
+      const recentTransactionsQuery = query(collection(db, "transactions"), orderBy("created_at", "desc"), limit(5))
+      const recentTransactionsSnapshot = await getDocs(recentTransactionsQuery)
+      const recentTransactions = await Promise.all(
+        recentTransactionsSnapshot.docs.map(async (doc) => {
+          const transaction = doc.data()
+          const userDoc = await getDoc(transaction.user_id)
+          return {
+            id: doc.id,
+            ...transaction,
+            user: userDoc.exists() ? userDoc.data() : { full_name: "Unknown User" },
+          }
+        }),
+      )
 
       setStats({
-        totalUsers: totalUsers || 0,
-        activeUsers: activeUsers || 0,
-        totalTasks: totalTasks || 0,
-        activeTasks: activeTasks || 0,
-        totalTransactions: totalTransactions || 0,
+        totalUsers,
+        activeUsers,
+        totalTasks,
+        activeTasks,
+        totalTransactions,
         totalRevenue,
-        pendingWithdrawals: pendingWithdrawals || 0,
-        totalReferrals: totalReferrals || 0,
+        pendingWithdrawals,
+        totalReferrals,
       })
 
-      setRecentActivity(recentTransactions || [])
+      setRecentActivity(recentTransactions)
     } catch (error) {
       console.error("Error loading admin data:", error)
     } finally {

@@ -9,7 +9,8 @@ import DailyStreak from "@/components/streaks/daily-streak"
 import ReferralPriority from "@/components/referrals/referral-priority"
 import ComingSoon from "@/components/coming-soon"
 import { getCurrentUser } from "@/lib/supabase"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore"
 import type { User, UserTask } from "@/lib/types"
 import { Spinner } from "@/components/ui/spinner"
 import { Calendar } from "lucide-react"
@@ -30,38 +31,41 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     try {
       const currentUser = await getCurrentUser()
-      if (!currentUser) return
+      if (!currentUser) {
+        setIsLoading(false)
+        return
+      }
 
-      setUser(currentUser)
+      setUser(currentUser as User)
 
       // Load completed tasks count
-      const { count: tasksCount } = await supabase
-        .from("user_tasks")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", currentUser.id)
-        .eq("status", "completed")
+      const completedTasksQuery = query(
+        collection(db, "user_tasks"),
+        where("user_id", "==", currentUser.id),
+        where("status", "==", "completed"),
+      )
+      const tasksSnapshot = await getDocs(completedTasksQuery)
+      const tasksCount = tasksSnapshot.size
 
       // Load referrals count
-      const { count: referralsCount } = await supabase
-        .from("referrals")
-        .select("*", { count: "exact", head: true })
-        .eq("referrer_id", currentUser.id)
+      const referralsQuery = query(collection(db, "referrals"), where("referrer_id", "==", currentUser.id))
+      const referralsSnapshot = await getDocs(referralsQuery)
+      const referralsCount = referralsSnapshot.size
 
       // Load recent tasks
-      const { data: recentTasks } = await supabase
-        .from("user_tasks")
-        .select(`
-          *,
-          task:tasks(*)
-        `)
-        .eq("user_id", currentUser.id)
-        .order("created_at", { ascending: false })
-        .limit(5)
+      const recentTasksQuery = query(
+        collection(db, "user_tasks"),
+        where("user_id", "==", currentUser.id),
+        orderBy("created_at", "desc"),
+        limit(5),
+      )
+      const recentTasksSnapshot = await getDocs(recentTasksQuery)
+      const recentTasks = recentTasksSnapshot.docs.map((doc) => doc.data() as UserTask)
 
       setStats({
-        completedTasks: tasksCount || 0,
-        referrals: referralsCount || 0,
-        recentTasks: recentTasks || [],
+        completedTasks: tasksCount,
+        referrals: referralsCount,
+        recentTasks: recentTasks,
       })
     } catch (error) {
       console.error("Error loading dashboard data:", error)

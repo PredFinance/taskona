@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AdminLayout from "@/components/admin/admin-layout"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, getDocs, query, orderBy, doc, getDoc, updateDoc, runTransaction } from "firebase/firestore"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
 import { Check, X, Eye, Filter } from "lucide-react"
@@ -36,31 +37,40 @@ export default function AdminTransactionsPage() {
   }, [])
 
   const loadData = async () => {
+    setIsLoading(true)
     try {
       // Load transactions
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from("transactions")
-        .select(`
-          *,
-          user:users(full_name, email)
-        `)
-        .order("created_at", { ascending: false })
-
-      if (transactionsError) throw transactionsError
+      const transactionsQuery = query(collection(db, "transactions"), orderBy("created_at", "desc"))
+      const transactionsSnapshot = await getDocs(transactionsQuery)
+      const transactionsData = await Promise.all(
+        transactionsSnapshot.docs.map(async (transactionDoc) => {
+          const data = transactionDoc.data()
+          const userDoc = data.user_id ? await getDoc(doc(db, "users", data.user_id)) : null
+          return {
+            id: transactionDoc.id,
+            ...data,
+            user: userDoc?.exists() ? userDoc.data() : { full_name: "Unknown User" },
+          } as TransactionWithUser
+        }),
+      )
 
       // Load withdrawals
-      const { data: withdrawalsData, error: withdrawalsError } = await supabase
-        .from("withdrawals")
-        .select(`
-          *,
-          user:users(full_name, email)
-        `)
-        .order("created_at", { ascending: false })
+      const withdrawalsQuery = query(collection(db, "withdrawals"), orderBy("created_at", "desc"))
+      const withdrawalsSnapshot = await getDocs(withdrawalsQuery)
+      const withdrawalsData = await Promise.all(
+        withdrawalsSnapshot.docs.map(async (withdrawalDoc) => {
+          const data = withdrawalDoc.data()
+          const userDoc = data.user_id ? await getDoc(doc(db, "users", data.user_id)) : null
+          return {
+            id: withdrawalDoc.id,
+            ...data,
+            user: userDoc?.exists() ? userDoc.data() : { full_name: "Unknown User" },
+          } as WithdrawalWithUser
+        }),
+      )
 
-      if (withdrawalsError) throw withdrawalsError
-
-      setTransactions(transactionsData || [])
-      setWithdrawals(withdrawalsData || [])
+      setTransactions(transactionsData)
+      setWithdrawals(withdrawalsData)
     } catch (error) {
       console.error("Error loading data:", error)
       toast.error("Failed to load data")
@@ -71,15 +81,11 @@ export default function AdminTransactionsPage() {
 
   const handleApproveWithdrawal = async (withdrawalId: string) => {
     try {
-      const { error } = await supabase
-        .from("withdrawals")
-        .update({
-          status: "completed",
-          processed_at: new Date().toISOString(),
-        })
-        .eq("id", withdrawalId)
-
-      if (error) throw error
+      const withdrawalRef = doc(db, "withdrawals", withdrawalId)
+      await updateDoc(withdrawalRef, {
+        status: "completed",
+        processed_at: new Date().toISOString(),
+      })
 
       toast.success("Withdrawal approved successfully")
       loadData()
@@ -94,23 +100,20 @@ export default function AdminTransactionsPage() {
       const withdrawal = withdrawals.find((w) => w.id === withdrawalId)
       if (!withdrawal) return
 
-      // Update withdrawal status
-      const { error: withdrawalError } = await supabase
-        .from("withdrawals")
-        .update({ status: "failed" })
-        .eq("id", withdrawalId)
+      await runTransaction(db, async (transaction) => {
+        const withdrawalRef = doc(db, "withdrawals", withdrawalId)
+        const userRef = doc(db, "users", withdrawal.user_id)
 
-      if (withdrawalError) throw withdrawalError
+        // Update withdrawal status
+        transaction.update(withdrawalRef, { status: "failed" })
 
-      // Refund the amount to user's balance
-      const { data: user } = await supabase.from("users").select("balance").eq("id", withdrawal.user_id).single()
-
-      if (user) {
-        await supabase
-          .from("users")
-          .update({ balance: user.balance + withdrawal.amount })
-          .eq("id", withdrawal.user_id)
-      }
+        // Refund the amount to user's balance
+        const userDoc = await transaction.get(userRef)
+        if (userDoc.exists()) {
+          const userData = userDoc.data()
+          transaction.update(userRef, { balance: (userData.balance || 0) + withdrawal.amount })
+        }
+      })
 
       toast.success("Withdrawal rejected and amount refunded")
       loadData()

@@ -5,7 +5,8 @@ import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import TaskCard from "@/components/tasks/task-card"
 import TaskModal from "@/components/tasks/task-modal"
 import { getCurrentUser } from "@/lib/supabase"
-import { supabase } from "@/lib/supabase"
+import { db } from "@/lib/firebase"
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore"
 import type { Task, User, UserTask } from "@/lib/types"
 import { Spinner } from "@/components/ui/spinner"
 import { Search, Filter } from "lucide-react"
@@ -25,24 +26,28 @@ export default function TasksPage() {
   }, [])
 
   const loadData = async () => {
+    setIsLoading(true)
     try {
-      const currentUser = await getCurrentUser()
-      if (!currentUser) return
+      const currentUser = (await getCurrentUser()) as User | null
+      if (!currentUser) {
+        setIsLoading(false)
+        return
+      }
 
       setUser(currentUser)
 
       // Load available tasks
-      const { data: tasksData } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
+      const tasksQuery = query(collection(db, "tasks"), where("is_active", "==", true), orderBy("created_at", "desc"))
+      const tasksSnapshot = await getDocs(tasksQuery)
+      const tasksData = tasksSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Task[]
 
       // Load completed tasks for this user
-      const { data: completedTasksData } = await supabase.from("user_tasks").select("*").eq("user_id", currentUser.id)
+      const completedTasksQuery = query(collection(db, "user_tasks"), where("user_id", "==", currentUser.id))
+      const completedTasksSnapshot = await getDocs(completedTasksQuery)
+      const completedTasksData = completedTasksSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as UserTask[]
 
-      setTasks(tasksData || [])
-      setCompletedTasks(completedTasksData || [])
+      setTasks(tasksData)
+      setCompletedTasks(completedTasksData)
     } catch (error) {
       console.error("Error loading tasks:", error)
     } finally {
